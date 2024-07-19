@@ -7,6 +7,8 @@ import bot.keyboards as kb
 import bot.inline as il
 from bot import lists
 
+from database.queries import *
+
 import random
 
 from bot.messages import *
@@ -16,83 +18,56 @@ rt = Router()
 
 @rt.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
-    await message.answer(f"Hello and welcome, <b>{message.from_user.first_name}</b>! ✅", reply_markup=kb.main_keyboard)
+    chat_id = message.chat.id
+    insert_user_to_languages_table(chat_id)
+    await message.answer(f"Hello and welcome, <b>{message.from_user.first_name}</b>!"
+                         f"✅\n\n<b>Выберите язык: 🌐\nChoose language: 🌐</b>", reply_markup=il.languages)
     await message.delete()
 
 
-@rt.message(F.text == "MAIN MENU")
+@rt.callback_query(lambda callback: callback.data in ["rus", "eng", "uzb"])
+async def set_language(callback: CallbackQuery):
+    chat_id = callback.message.chat.id
+    language = callback.data
+    update_user_language(chat_id, language)
+    chat_id = callback.message.chat.id
+    language = get_user_language(chat_id)
+    await callback.message.delete()
+    await callback.message.answer(f"""{messages['message_1'][language]}""", reply_markup=kb.main_menu(language))
+
+
+@rt.message(lambda message: message.text in ["Изменить язык", "Change language"])
+async def command_start_handler(message: Message) -> None:
+    await message.answer(f"✅\n\n<b>Выберите язык: 🌐\nChoose language: 🌐</b>", reply_markup=il.languages)
+    await message.delete()
+
+
+@rt.message(lambda message: message.text in ["Main menu", "Главное меню"])
 async def back_to_menu(message: Message) -> None:
-    await message.answer("You have gone back to the main menu!", reply_markup=kb.main_keyboard)
+    chat_id = message.chat.id
+    language = get_user_language(chat_id)
+    await message.answer(f"{messages['message_2'][language]}!", reply_markup=kb.main_menu(language))
 
 
-@rt.message(F.text == "List of all anime of 2022-2024 period")
+@rt.message(lambda message: message.text in ["Список аниме по годам", "List of anime by year"])
 async def anime_list(message: Message) -> None:
-    await message.answer("Years of anime releases are presented below.", reply_markup=kb.years_keyboard)
+    chat_id = message.chat.id
+    language = get_user_language(chat_id)
+    await message.answer(messages["anime_list"][language], reply_markup=kb.years_keyboard(language))
 
 
-@rt.message(F.text == "2022")
-async def anime_2022(message: Message) -> None:
+@rt.message(lambda message: message.text in [year[1] for year in get_all_years()])
+async def anime_by_year(message: Message) -> None:
+    year = message.text
+    year_id = get_year_by_title(year)
     await message.answer_photo(photo="https://i.insider.com/61d786c637afc20019ac999b?width=700",
-                               caption="Here they are! 👇", reply_markup=il.anime2022_keyboard)
+                               caption="Here they are! 👇", reply_markup=il.anime_by_year(year_id))
 
 
-@rt.message(F.text == "2023")
-async def anime_2023(message: Message) -> None:
-    await message.answer_photo(photo="https://www.enter.co/wp-content/uploads/2023/03/temporada-primavera-2023.jpg",
-                               caption="Here they are! 👇", reply_markup=il.anime2023_keyboard)
-
-
-@rt.message(F.text == "2024")
-async def anime_2024(message: Message) -> None:
-    await message.answer_photo(photo="https://static0.gamerantimages.com/wordpress/wp-content/uploads/2024/01/best-winter-2024-anime.jpg",
-                               caption="Here they are! 👇", reply_markup=il.anime2024_keyboard)
-
-
-@rt.callback_query(F.data == "spy_family")
+@rt.callback_query(lambda callback: callback.data.startswith("anime_"))
 async def spy_family(callback: CallbackQuery) -> None:
-    await callback.message.answer_photo(photo="https://imgsrv.crunchyroll.com/cdn-cgi/image/fit=contain,format=auto,quality=85,width=480,height=720/catalog/crunchyroll/095217fdb4f228410df09b18f151be28.jpe",
-                                        caption="<i><b>Spy Family</b></i>", reply_markup=il.rate_keyboard)
-
-
-@rt.callback_query(F.data == "bocchi_the_rock")
-async def bocchi_the_rock(callback: CallbackQuery) -> None:
-    await callback.message.answer_photo(photo="https://m.media-amazon.com/images/M/MV5BMzg1Yzg1NjQtZmQyOC00N2MwLWFkYmEtNDI0NGI3ODMzMDExXkEyXkFqcGdeQXVyNjAwNDUxODI@._V1_FMjpg_UX1000_.jpg",
-                               caption="<i><b>Bocchi the rock</b></i>", reply_markup=il.rate_keyboard)
-
-
-@rt.callback_query(F.data == "date_a_live")
-async def date_a_live(callback: CallbackQuery) -> None:
-    await callback.message.answer_photo(photo="https://upload.wikimedia.org/wikipedia/en/1/13/Date_a_Live_IV.jpg", caption="<i><b>Date a live</b></i>", reply_markup=il.rate_keyboard)
-
-
-@rt.callback_query(F.data == "oshi_no_ko")
-async def oshi_no_ko(callback: CallbackQuery) -> None:
-    await callback.message.answer_photo(photo="https://m.media-amazon.com/images/M/MV5BZmM1M2E1ZDEtYTZiNy00NzFjLTk2NDUtODExMWM3OWQ2NGU3XkEyXkFqcGdeQXVyNjAwNDUxODI@._V1_.jpg", caption="<i><b>Oshi no ko</b></i>", reply_markup=il.rate_keyboard)
-
-
-@rt.callback_query(F.data == "horimiya")
-async def horimiya(callback: CallbackQuery) -> None:
-    await callback.message.answer_photo(photo="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSWrJoVIEV2k8f8KHs7VfftgUgeJXXdmpZZqw&s", caption="<b><i>Horimiya</i></b>", reply_markup=il.rate_keyboard)
-
-
-@rt.callback_query(F.data == "tomozaki")
-async def tomozaki(callback: CallbackQuery) -> None:
-    await callback.message.answer_photo(photo="https://static.wikia.nocookie.net/yowa-chara-tomozaki-kun/images/f/fd/Heroines-Anime_1.png/revision/latest/scale-to-width-down/1200?cb=20201107162018", caption="<b><i>Low-tier character Tomozaki kun</i></b>", reply_markup=il.rate_keyboard)
-
-
-@rt.callback_query(F.data == "cote")
-async def cote(callback: CallbackQuery) -> None:
-    await callback.message.answer_photo(photo="https://imgsrv.crunchyroll.com/cdn-cgi/image/fit=contain,format=auto,quality=85,width=480,height=720/catalog/crunchyroll/8b35b4a6cffe66004f752aa147351cab.jpe", caption="<i><b>Classroom of the elite</b></i>", reply_markup=il.rate_keyboard)
-
-
-@rt.callback_query(F.data == "alya_russian")
-async def alya_russian(callback: CallbackQuery) -> None:
-    await callback.message.answer_photo(photo="https://imgsrv.crunchyroll.com/cdn-cgi/image/fit=contain,format=auto,quality=85,width=480,height=720/catalog/crunchyroll/a4b79dd3cf47803d2c51f562e40bac93.jpg", caption="<i><b>Alya sometimes hides her feelings in russian</b></i>", reply_markup=il.rate_keyboard)
-
-
-@rt.callback_query(F.data == "rent_a_girlfriend")
-async def rent_a_girlfriend(callback: CallbackQuery) -> None:
-    await callback.message.answer_photo(photo="https://m.media-amazon.com/images/M/MV5BZDM0YWNjNGQtNWJjMS00YTliLWE4YjItOGQzNWQxMmNkZDg4XkEyXkFqcGdeQXVyMzgxODM4NjM@._V1_FMjpg_UX1000_.jpg", caption="<i><b>Rent-a-Girlfriend</b></i>", reply_markup=il.rate_keyboard)
+    anime_data = get_anime_data(callback.data)
+    await callback.message.answer(f"<b>{anime_data[0]}</b>\n <b><i>{anime_data[1]}</i></b>\n\n {anime_data[2]}")
 
 
 @rt.callback_query(F.data == "like")
@@ -105,21 +80,23 @@ async def dislike(callback: CallbackQuery) -> None:
     await callback.answer("😒 You have disliked the anime")
 
 
-@rt.message(F.text == "Random location 📍")
+@rt.message(lambda message: message.text in ["Random location 📍", "Случайная локация 📍"])
 async def random_location(message: Message) -> None:
+    chat_id = message.chat.id
+    language = get_user_language(chat_id)
     try:
         await message.answer_location(latitude=random.randint(1, 200), longitude=random.randint(1, 200))
     except TelegramBadRequest:
-        await message.answer("Something went wrong! 😱\nTry again later!")
+        await message.answer(messages["error"][language])
 
 
-@rt.message(F.text == "Random emoji 🤩")
+@rt.message(lambda message: message.text in ["Случайный эмодзи 😊", "Random emoji 😊"])
 async def random_emoji(message: Message) -> None:
     await message.answer(f"{random.choice(lists.emoji)}")
 
 
-@rt.message(F.text == "Random sticker 🥰")
-async def random_emoji(message: Message) -> None:
+@rt.message(lambda message: message.text in ["Случайный стикер 🥰", "Random sticker 🥰"])
+async def random_sticker(message: Message) -> None:
     await message.answer_sticker(sticker=random.choice(lists.stickers))
 
 
@@ -131,6 +108,7 @@ async def description(message: Message) -> None:
 @rt.message(Command(commands=["help"]))
 async def help(message: Message) -> None:
     await message.answer(COMMANDS_LIST)
+
 
 @rt.message(F.text == "List of commands 🕹")
 async def description(message: Message) -> None:

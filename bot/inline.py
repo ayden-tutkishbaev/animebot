@@ -1,31 +1,23 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+from database.queries import *
 
-
-anime2022_keyboard = InlineKeyboardMarkup(
+languages = InlineKeyboardMarkup(
     inline_keyboard=[
-        [InlineKeyboardButton(text="Spy Family", callback_data="spy_family", url="")],
-        [InlineKeyboardButton(text="Bocchi the rock!", callback_data="bocchi_the_rock", url="")],
-        [InlineKeyboardButton(text="Date a live", callback_data="date_a_live", url="")]
-    ]
+        [InlineKeyboardButton(text="🇬🇧 ENGLISH", callback_data="eng")],
+        [InlineKeyboardButton(text="🇷🇺 РУССКИЙ", callback_data="rus")]
+    ],
 )
 
 
-anime2023_keyboard = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [InlineKeyboardButton(text="Oshi no ko", callback_data="oshi_no_ko", url="")],
-        [InlineKeyboardButton(text="Horimiya", callback_data="horimiya", url="")],
-        [InlineKeyboardButton(text="Rent-a-girlfriend", callback_data="rent_a_girlfriend", url="")],
-    ]
-)
+def anime_by_year(year):
+    anime_list = get_anime_by_year(year)
+    keyboard = InlineKeyboardBuilder()
+    for anime in anime_list:
+        print(f"Name of anime: {anime[1]}, data: anime_{anime[0]}")
+        keyboard.add(InlineKeyboardButton(text=anime[1], callback_data=f"anime_{anime[0]}"))
+    return keyboard.adjust(2).as_markup()
 
-
-anime2024_keyboard = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [InlineKeyboardButton(text="Low-tier character Tomozaki kun", url="", callback_data="tomozaki")],
-        [InlineKeyboardButton(text="Classroom of the elite", url="", callback_data="cote")],
-        [InlineKeyboardButton(text="Alya sometimes hides her feelings in russian", url="", callback_data="alya_russian")]
-    ]
-)
 
 rate_keyboard = InlineKeyboardMarkup(
     inline_keyboard=[

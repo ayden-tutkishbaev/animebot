@@ -1,18 +1,30 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from bot.messages import *
+from aiogram.utils.keyboard import ReplyKeyboardBuilder
+from database.queries import *
 
-main_keyboard = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text="List of all anime of 2022-2024 period")],
-        [KeyboardButton(text="Random sticker 🥰"), KeyboardButton(text="Random location 📍"),
-         KeyboardButton(text="Random emoji 🤩")],
-        [KeyboardButton(text="Description 🗒")],
-        [KeyboardButton(text="List of commands 🕹")],
-    ], resize_keyboard=True, input_field_placeholder='Choose option'
-)
 
-years_keyboard = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text="2022"), KeyboardButton(text="2023"), KeyboardButton(text="2024")],
-        [KeyboardButton(text="MAIN MENU")]
-    ], resize_keyboard=True, input_field_placeholder='Choose a year'
-)
+def main_menu(language):
+    main_keyboard = ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text=buttons['button_anime'][language])],
+            [KeyboardButton(text=buttons['button_sticker'][language]), KeyboardButton(text=buttons['button_location'][language]),
+             KeyboardButton(text=buttons['button_emoji'][language])],
+            [KeyboardButton(text=buttons['button_description'][language])],
+            [KeyboardButton(text=buttons['button_commands'][language])],
+            [KeyboardButton(text=buttons['button_lang'][language])],
+        ], resize_keyboard=True, input_field_placeholder='Choose option'
+    )
+
+    return main_keyboard
+
+
+def years_keyboard(language):
+    all_years = get_all_years()
+    keyboard = ReplyKeyboardBuilder()
+    for year in all_years:
+        keyboard.button(text=f"{year[1]}")
+    keyboard.button(text=buttons['button_menu'][language]).adjust(1)
+    return keyboard.as_markup()
+
+

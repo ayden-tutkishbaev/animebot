@@ -8,6 +8,8 @@ from aiogram.enums import ParseMode
 
 from bot import handlers
 
+from database.core import *
+
 from dotenv import dotenv_values
 
 dotenv = dotenv_values(".env")
@@ -16,6 +18,7 @@ dotenv = dotenv_values(".env")
 async def main() -> None:
     dp = Dispatcher()
     bot = Bot(token=dotenv["BOT_TOKEN"], default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+
     dp.include_routers(
         handlers.rt,
     )
@@ -24,6 +27,9 @@ async def main() -> None:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+    # create_languages_table()
+    # create_years_table()
+    # create_anime_table()
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
